@@ -21,11 +21,20 @@ struct Command {
 	// return -1 to force monitor to exit
 	int (*func)(int argc, char** argv, struct Trapframe* tf);
 };
+// struct Eipdebuginfo{
+// 	char *eip_file;
+// 	int eip_line;
+// 	char *eip_fn_name;
+// 	int eip_fn_nameln;
+// 	uintptr_t eip_fn_addr;
+// 	int eip_fn_narg;
+// };
 
 // LAB 1: add your command to here...
 static struct Command commands[] = {
 	{ "help", "Display this list of commands", mon_help },
 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
+	{"backtrace","dispaly the backtrace of the monitor", mon_backtrace},
 };
 
 /***** Implementations of basic kernel monitor commands *****/
@@ -59,9 +68,22 @@ mon_kerninfo(int argc, char **argv, struct Trapframe *tf)
 int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
-	// LAB 1: Your code here.
-    // HINT 1: use read_ebp().
-    // HINT 2: print the current ebp on the first line (not current_ebp[0])
+	int *ebp = (int*)read_ebp(); //who could've guessed that the hint was helpful
+	struct Eipdebuginfo info;
+    cprintf("Stack backtrace:\n");
+    while (ebp != 0) {//0 is when the back trace is over
+        int eip = ebp[1]; // Return address
+        cprintf(" ebp %x eip %x args %08x %08x %08x %08x %08x\n", ebp, eip, ebp[2], ebp[3], ebp[4], ebp[5], ebp[6]);
+		//struct Eipdebuginfo *info = kmalloc(sizeof(struct Eipdebuginfo));//didnt need to init it as it is init in the function call
+		int test = debuginfo_eip(eip, &info);
+		if (test==0){
+			char* funname = (char*)info.eip_fn_name;
+			if (strlen(funname) >= strlen(":F(0,18)") && strcmp(funname + strlen(funname) - strlen(":F(0,18)"), ":F(0,18)") == 0)
+				funname[strlen(funname) - strlen(":F(0,18)")] = '\0';//remove the F(0,18) part of the strings that arent supposed to be displayed
+			cprintf("    %s:%d: %s+%d\n", info.eip_file, info.eip_line, funname, eip - info.eip_fn_addr);
+		}
+        ebp = (int*)ebp[0]; // Move to the next part of the stack
+    }
 	return 0;
 }
 
@@ -118,6 +140,9 @@ monitor(struct Trapframe *tf)
 
 	cprintf("Welcome to the JOS kernel monitor!\n");
 	cprintf("Type 'help' for a list of commands.\n");
+	// cprintf("x=%d y=%d", 3);
+
+
 
 	if (tf != NULL)
 		print_trapframe(tf);
