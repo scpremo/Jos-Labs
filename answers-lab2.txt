@@ -1,0 +1,14 @@
+1. since c works in virtual memory address rather then physical, Mystery_t should be uintptr_t
+2.  entry 1023 ---  Page table for top 4MB of physical memory(assume 4mb has of physical memory after it)
+    entry 1022 ---  pae table for second top 4 MB 
+    entry 2         page table for the third lowest 4MB
+    entry 1         page table with the second lowest 4MB
+    entry 0         page table for lowest 4MB
+3. we made sure that the permissions for user to have access were not set to true
+4. We only are working with a single layed page table process, we have a 32 bit system and we need 4 bytes for the link and 4 for the refrence
+    due to that we have to divide our memory by the amount of pages 4096 *1024 or 4MB 4MB/8B=512 KB since each page is also 4KB  max is 2GB
+5.  We use all of the 4MB for page info and page table will be 4KB since we have at most 1KB of memory in page table entries and each is 4 bytes
+so we get 4MB +2MB +4K= 6MB +2KB in needed overhead 
+
+6. After we set CR3, the addres of EIP is still low.
+It gets reset to high once we jmp which allows virtual address page translation

@@ -1,0 +1,154 @@
+In your lab1 writeup, answer the following questions:
+1. At what point does the processor start executing 32-bit code? What exactly
+causes the switch from 16- to 32-bit mode?
+0x00007c32 ? mov    $0xd88e0010,%eax causes the switch
+This is where the processor switches and starts executing 32 bit code
+Previous chunk switches us into protected mode which allows the 32 bit
+first 32 bit instructions is 0x00007c32 ? mov    $0xd88e0010,%eax
+
+2. What is the last instruction of the boot loader executed, and what is
+the first instruction of the kernel it just loaded?
+0x00007d61  call   *0x10018
+the last insturction of the boot loader calls the kernel 
+first instruction of the kernel was movw   $0x1234,0x472
+
+3. Where is the first instruction of the kernel?
+0x0010000c
+
+4. How does the boot loader decide how many sectors it must read in order to fetch
+the entire kernel from disk? Where does it find this information?
+After reading the firs segment of memory, the code checks to see if it is a valid ELF,
+if it ism then it uses information from the first segment to know how much it needs to
+read to finish loading the kernel
+
+5. Where do the pointer addresses in lines 1 and 6 come from?
+Line 1 the pointer address are the memory addresses of the variables a,b and c
+Line 6 is the same, but the addresses have been changed throughout execution, 
+
+6. How do we get all the values in lines 2 through 4?
+before line 2, c is set to be pointing to a
+a sets its values to be 100,101,102,103
+c sets its first value which is also a's first value to 200 which causes line 2 to be
+200,101,102,103.
+for line 3 we see 3 different ways of accesing the values of the array
+c[1] = 300;
+*(c + 2) = 301;
+3[c] = 302;
+first is just the second slot of the array, secibd us adding 2 to the address of c which is the 3rd array slot
+and last is different notation for accesing arrays called pointer offset notation
+
+for line 4, c is set to pointing one address higher which is the second array index, then it derefrences itself and sets it to 400
+
+
+7. Why are the values printed in line 5 seemingly corrupted?
+the pointer adds one more byte of memory to c, and then tries to write a value there, this causing misalinged
+which can lead to seg faults.
+
+8. Why are they different?
+Boot Loader
+>>> x/8x 0x00100000
+0x100000:       0x00000000      0x00000000      0x00000000      0x00000000
+0x100010:       0x00000000      0x00000000      0x00000000      0x00000000
+
+Kernel
+>>> x/8x 0x00100000
+0x100000:       0x1badb002      0x00000000      0xe4524ffe      0x7205c766
+0x100010:       0x34000004      0x0000b812      0x220f0011      0xc0200fd8
+
+when we start the bootloader, there is no data there so it is all 0's
+once the bootloader has finished, then the information there is initialized
+
+9. What is there at the second breakpoint?
+the first 1 ends with 002 which is the number used to identify the start of the kernel.
+The other values, are to know inforamtion needed to load the kernel
+
+10. What is the first instruction after the new mapping is established that would fail to
+work properly if the mapping weren’t in place? 
+when this happens, the code links the two address spaces. which enables paging
+The first instruction to fail will be the jump as addresses are using paging
+Comment out the movl %eax, %cr0 in kern/entry.S, trace into it, and see if you were right.
+It looks like the code down at the movl	$0x0,%ebp which is when the frame pointer is 
+removed, which makes sense as then it loses itself
+
+11.Explain the interface between kern/printf.c and kern/console.c. Specifically, what
+function does kern/console.c export? How is this function used by kern/printf.c?
+Console.c exports the putch function, the putch function is uesd to display a char onto the output
+
+12.Explain the following from kern/console.c:
+I have a few assumptions that I am making for this bassed off of variable names
+I assume the crt_pos is position on a screen and size is the max the position can be.
+if these assumptions are correct then this is checking to see if we are over the max size
+the memmove opeeration is then moving the memory from the buffer + the amount of collums to the
+start of the memory clears out space from size - cols to size and sets moves the position backwards
+in line with where it should be.
+
+13.In the call to cprintf(), to what does fmt point? To what does ap point?
+fmt points to the array location, and ap points to the list of extra arguments
+14.List (in order of execution) each call to cons_putc, va_arg, and vcprintf.
+For cons_putc, list its argument as well. For va_arg, list what ap points to before and
+after the call. For vcprintf list the values of its two arguments.
+first vcprintf calls(fmt, the varialbes(x,y,z))
+cons_putc (x)
+cons_putc ( )
+va_arg ap points to 1
+cons_putc (1)
+cons_putc (,)
+cons_putc ( )
+cons_putc (y)
+cons_putc ( )
+va_arg ap points to 3
+cons_putc (3)
+cons_putc (,)
+cons_putc ( )
+cons_putc (z)
+cons_putc ( )
+va_arg ap points to 4
+cons_putc (4)
+cons_putc (,)
+
+unsigned int i = 0x00646c72;
+cprintf("H%x Wo%s", 57616, &i);
+
+15.What is the output? Explain how this output is arrived at in the step-by-step
+manner of the previous exercise. Here’s an ASCII table (or type man ascii) that
+maps bytes to characters.
+
+He110 World
+
+vcprintf contains the stirng and the variables in the call
+first print c is H  
+then %x
+in the printfmt function it changes the %x to print the number recursively using the basse  
+then cons_putc( )
+va arg points to the int and then the hex string.
+
+
+16.The output depends on the fact that the x86 is little-endian. If the x86 were
+instead big-endian what would you set i to in order to yield the same output?
+Would you need to change 57616 to a different value?
+57616 would not need to change as its a conversion from decimal to hex
+you would need to change i to be 0x726c6400
+7.In the following code, what is going to be printed after 'y='? (note: the answer is
+not a specific value.) Why does this happen?
+when I called it I got
+y=-267380516
+this is becasue the function thinks there is going to be a variable there so it access the memory
+ after where the 3 was stored which is a value that is outside of what we are working with
+
+ 18.How would you have to change cprintf or its interface so that it would still be
+possible to pass it a variable number of arguments?
+ 
+ 
+ 19. How many 32-bit words does each recursive nesting level of test_backtrace push on
+the stack, and what are those words?
+
+ it looks like it pushes two words in each recurssive call
+ call 1
+ ebp = 0xf010ffd8
+ eip = 0xf0100047
+ call 2
+ ebp = 0xf010ffb8
+ eip = 0xf0100043
+ call 3
+ ebp = 0xf010ffb8
+ eip = 0xf0100041
