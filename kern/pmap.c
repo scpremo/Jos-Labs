@@ -277,6 +277,11 @@ mem_init_mp(void)
 	//     Permissions: kernel RW, user NONE
 	//
 	// LAB 4: Your code here:
+	for (int i = 0; i < NCPU; i++)
+    {
+        uintptr_t kstacktop_i = KSTACKTOP - i * (KSTKSIZE + KSTKGAP);
+        boot_map_region(kern_pgdir, kstacktop_i - KSTKSIZE, KSTKSIZE, PADDR(percpu_kstacks[i]),PTE_W);
+    }
 
 }
 
@@ -317,7 +322,7 @@ page_init(void)
 	// NB: DO NOT actually touch the physical memory corresponding to
 	// free pages!
 	for (int i = 0; i < npages; i++) {
-		if(!(i ==0 ||(i>=npages_basemem && i <=PGNUM(PADDR(boot_alloc(0)))))){
+		if(!(i == 0 ||(i>=npages_basemem && i <=PGNUM(PADDR(boot_alloc(0))))||(i == (ROUNDDOWN(MPENTRY_PADDR, PGSIZE) / PGSIZE)))){
 			pages[i].pp_ref = 0;
 			pages[i].pp_link = page_free_list;
 			page_free_list = &pages[i];
@@ -604,7 +609,17 @@ mmio_map_region(physaddr_t pa, size_t size)
 	// Hint: The staff solution uses boot_map_region.
 	//
 	// Your code here:
-	panic("mmio_map_region not implemented");
+    //base = ROUNDDOWN(base, PGSIZE);
+
+    //pa = ROUNDDOWN(pa, PGSIZE);
+
+    if (base + size > MMIOLIM)
+        panic("size too big");
+
+    boot_map_region(kern_pgdir, base, (size_t)(ROUNDUP(pa + size, PGSIZE) - pa), pa, PTE_PCD | PTE_PWT | PTE_W);
+    uintptr_t temp = base;
+	base = ROUNDUP(base + size, PGSIZE);
+    return (void *)temp;
 }
 
 static uintptr_t user_mem_check_addr;
