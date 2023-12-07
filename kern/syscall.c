@@ -82,15 +82,8 @@ sys_exofork(void)
 	// status is set to ENV_NOT_RUNNABLE, and the register set is copied
 	// from the current environment -- but tweaked so sys_exofork
 	// will appear to return 0.
-	struct Env *newEnv;
-	int returnInfo =env_alloc(&newEnv, curenv->env_id);
-	if(returnInfo<0)
-		return returnInfo; //since return infor will return both of the errors for -E_no_FREE_ENV and no mem, single test for both
-	newEnv->env_status = ENV_NOT_RUNNABLE;
-	newEnv->env_tf = curenv->env_tf;
-	newEnv->env_tf.tf_regs.reg_eax = 0;
+
 	// LAB 4: Your code here.
-	return newEnv->env_id;
 	panic("sys_exofork not implemented");
 }
 
@@ -111,14 +104,6 @@ sys_env_set_status(envid_t envid, int status)
 	// envid's status.
 
 	// LAB 4: Your code here.
-	if (status != ENV_NOT_RUNNABLE && status != ENV_RUNNABLE) 
-		return -E_INVAL;
-
-	struct Env *statEnv;
-	if (envid2env(envid, &statEnv, 1)<0)
-		return -E_BAD_ENV;
-	statEnv ->env_status = status;
-	return 0;
 	panic("sys_env_set_status not implemented");
 }
 
@@ -134,13 +119,6 @@ static int
 sys_env_set_pgfault_upcall(envid_t envid, void *func)
 {
 	// LAB 4: Your code here.
-	
-	struct Env *pgEnv;
-	if (envid2env(envid, &pgEnv,1) <0){//checks if the return is < 0 if it is then we had an error and should return it
-		return -E_BAD_ENV;
-	}
-	pgEnv->env_pgfault_upcall = func;
-	return 0;
 	panic("sys_env_set_pgfault_upcall not implemented");
 }
 
@@ -169,23 +147,7 @@ sys_page_alloc(envid_t envid, void *va, int perm)
 	//   parameters for correctness.
 	//   If page_insert() fails, remember to free the page you
 	//   allocated!
-	struct Env *new_env;
-	if(envid2env(envid, &new_env, 1)<0)
-		return -E_BAD_ENV;
-	
-	if (va >= (void*)UTOP)
-		return -E_INVAL;//out of range
-	if(((PTE_U|PTE_P) & perm) !=  (PTE_U|PTE_P))
-		return-E_INVAL;
-	struct PageInfo *pge = page_alloc(0);
-	if(!pge) 
-		return -E_NO_MEM; //out of memory 
-	pge->pp_ref++;
-	if(page_insert(new_env->env_pgdir, pge, va, perm)<0){
-		page_free(pge);
-		return -E_NO_MEM;
-	}
-	return 0;
+
 	// LAB 4: Your code here.
 	panic("sys_page_alloc not implemented");
 }
@@ -216,35 +178,7 @@ sys_page_map(envid_t srcenvid, void *srcva,
 	//   parameters for correctness.
 	//   Use the third argument to page_lookup() to
 	//   check the current permissions on the page.
-	struct Env *src;
-	struct Env *dst;
 
-	if (envid2env(srcenvid, &src, 1)<0) 
-		return -E_BAD_ENV;	
-	
-
-	if (envid2env(dstenvid, &dst, 1)<0) 
-		return -E_BAD_ENV;	
-
-	if (ROUNDDOWN(srcva,PGSIZE) != srcva || srcva >= (void*)UTOP || ROUNDDOWN(dstva,PGSIZE) != dstva || dstva >= (void*)UTOP) 
-		return -E_INVAL;
-
-	pte_t *pte;
-	struct PageInfo *pge = page_lookup(src->env_pgdir, srcva, &pte);
-	if (!pge) 
-		return -E_INVAL;
-
-	if (((*pte&PTE_W) == 0) && (perm&PTE_W)) 
-		return -E_INVAL;
-
-	if ((perm & (PTE_U|PTE_P)) != (PTE_U|PTE_P)) 
-		return -E_INVAL;
-
-
-
-
-	if(page_insert(dst->env_pgdir, pge, dstva, perm)<0)
-		return -E_NO_MEM;
 	// LAB 4: Your code here.
 	panic("sys_page_map not implemented");
 }
@@ -260,15 +194,8 @@ static int
 sys_page_unmap(envid_t envid, void *va)
 {
 	// Hint: This function is a wrapper around page_remove().
-	
+
 	// LAB 4: Your code here.
-	if (va >= (void*)UTOP || ROUNDDOWN(va,PGSIZE) != va)
-		return -E_INVAL;
-	struct Env *remEnv;
-	if (envid2env(envid, &remEnv, 1)<0) 
-		return -E_BAD_ENV;	
-	page_remove(remEnv->env_pgdir, va);
-	return 0;
 	panic("sys_page_unmap not implemented");
 }
 
@@ -355,21 +282,6 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 		case SYS_cputs:
 			sys_cputs((const char*) a1,a2);
 			return 0;
-		case SYS_yield:
-			 sys_yield();
-			return 0;
-		case SYS_exofork:
-			return sys_exofork();
-		case SYS_env_set_status:
-			return sys_env_set_status(a1,a2);
-		case SYS_page_alloc:
-			return sys_page_alloc(a1, (void*)a2, a3);
-		case SYS_page_map:
-			return sys_page_map(a1, (void*)a2, a3, (void*) a4, a5);
-		case SYS_page_unmap:
-			return sys_page_unmap(a1, (void*)a2);
-		case SYS_env_set_pgfault_upcall:
-			return sys_env_set_pgfault_upcall(a1, (void*)a2);
 		default:
 			return -E_INVAL;
 
