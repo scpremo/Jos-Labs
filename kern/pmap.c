@@ -609,9 +609,9 @@ mmio_map_region(physaddr_t pa, size_t size)
 	// Hint: The staff solution uses boot_map_region.
 	//
 	// Your code here:
-    //base = ROUNDDOWN(base, PGSIZE);
+    base = ROUNDDOWN(base, PGSIZE);
 
-    //pa = ROUNDDOWN(pa, PGSIZE);
+    pa = ROUNDDOWN(pa, PGSIZE);
 
     if (base + size > MMIOLIM)
         panic("size too big");
