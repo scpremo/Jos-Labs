@@ -1,0 +1,38 @@
+1. Compare kern/mpentry.S side by side with boot/boot.S. Bearing in mind
+that kern/mpentry.S is compiled and linked to run above KERNBASE just like everything else
+in the kernel, what is the purpose of macro MPBOOTPHYS? Why is it necessary
+in kern/mpentry.S but not in boot/boot.S? In other words, what could go wrong if it were
+omitted in kern/mpentry.S? Hint: recall the differences between the link address and the
+load address that we have discussed in Lab 1.
+
+The purpose of having the MPBOOTPHYS macro is so that we tranlated the linked pages to where 
+it should be actually loaded. It is not needed in boot.s since boot.s is linked to 0x7c00 
+whereas mpentry.s is not. if we dont have this, mpentry will be loaded at a very high address
+
+2. It seems that using the big kernel lock guarantees that only one CPU can run the
+kernel code at a time. Why do we still need separate kernel stacks for each CPU?
+Describe a scenario in which using a shared kernel stack will go wrong, even with the
+protection of the big kernel lock.
+
+even though the lock guarantees that only one cpu runs at a time, registers are automatically
+pushed onto the stack before the trap handler. This means that if multiple CPUS shared the same
+stack, the stack will have unwanted values pushed making the stack useless
+
+3. In your implementation of env_run() you should have called lcr3(). Before and after
+the call to lcr3(), your code makes references (at least it should) to the variable e, the
+argument to env_run. Upon loading the %cr3 register, the addressing context used by the
+MMU is instantly changed. But a virtual address (namely e) has meaning relative to a
+given address context–the address context specifies the physical address to which the
+virtual address maps. Why can the pointer e be dereferenced both before and after the
+addressing switch?
+
+the pointer e is a statically mapped address. This means that the address will stay the same 
+from directory to directory.
+
+4. Whenever the kernel switches from one environment to another, it must ensure the
+old environment’s registers are saved so they can be restored properly later. Why?
+Where does this happen
+
+this needs to happen so that we can resume execution once we are done switching.
+
+This happens when a trap fram is made after entering the trap handler.
