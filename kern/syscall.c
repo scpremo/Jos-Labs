@@ -332,31 +332,6 @@ sys_page_unmap(envid_t envid, void *va)
 //		current environment's address space.
 //	-E_NO_MEM if there's not enough memory to map srcva in envid's
 //		address space.
-// static int
-// sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
-// {
-// 	// LAB 4: Your code here.
-// 	panic("sys_ipc_try_send not implemented");
-// }
-
-// // Block until a value is ready.  Record that you want to receive
-// // using the env_ipc_recving and env_ipc_dstva fields of struct Env,
-// // mark yourself not runnable, and then give up the CPU.
-// //
-// // If 'dstva' is < UTOP, then you are willing to receive a page of data.
-// // 'dstva' is the virtual address at which the sent page should be mapped.
-// //
-// // This function only returns on error, but the system call will eventually
-// // return 0 on success.
-// // Return < 0 on error.  Errors are:
-// //	-E_INVAL if dstva < UTOP but dstva is not page-aligned.
-// static int
-// sys_ipc_recv(void *dstva)
-// {
-// 	// LAB 4: Your code here.
-// 	panic("sys_ipc_recv not implemented");
-// 	return 0;
-// }
 static int
 sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 {
@@ -392,17 +367,17 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 	panic("sys_ipc_try_send not implemented");
 }
 
-// Block until a value is ready.  Record that you want to receive
-// using the env_ipc_recving and env_ipc_dstva fields of struct Env,
-// mark yourself not runnable, and then give up the CPU.
-//
-// If 'dstva' is < UTOP, then you are willing to receive a page of data.
-// 'dstva' is the virtual address at which the sent page should be mapped.
-//
-// This function only returns on error, but the system call will eventually
-// return 0 on success.
-// Return < 0 on error.  Errors are:
-//	-E_INVAL if dstva < UTOP but dstva is not page-aligned.
+// // Block until a value is ready.  Record that you want to receive
+// // using the env_ipc_recving and env_ipc_dstva fields of struct Env,
+// // mark yourself not runnable, and then give up the CPU.
+// //
+// // If 'dstva' is < UTOP, then you are willing to receive a page of data.
+// // 'dstva' is the virtual address at which the sent page should be mapped.
+// //
+// // This function only returns on error, but the system call will eventually
+// // return 0 on success.
+// // Return < 0 on error.  Errors are:
+// //	-E_INVAL if dstva < UTOP but dstva is not page-aligned.
 static int
 sys_ipc_recv(void *dstva)
 {
